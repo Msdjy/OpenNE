@@ -69,6 +69,16 @@ class GCN(object):
                 break
         print("Optimization Finished!")
 
+        # # 可视化
+        # label_dict = {0: "0.0000000e+00", 1: "1.0000000e+00", 2: "2.0000000e+00", 3: "3.0000000e+00",
+        #               4: "4.0000000e+00", 5: "5.0000000e+00", 6: "6.0000000e+00"}  # 定义标签颜色字典
+        # # 写文件
+        # with open("./embeddings.txt", "w") as fe, open("./labels.txt", 'w') as fl:
+        #     for i in range(len(outs[3])):
+        #         fl.write(label_dict[int(list(labels[i]).index(1.))] + "\n")
+        #         fe.write(" ".join(map(str, outs[3][i])) + "\n")
+        # #
+
         # Testing
         test_cost, test_acc, test_duration = self.evaluate(self.test_mask)
         print("Test set results:", "cost=", "{:.5f}".format(test_cost),

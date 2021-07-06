@@ -152,7 +152,11 @@ class Walker:
 
         look_up_dict = self.look_up_dict
         node_size = self.node_size
+
+        i = 0
         for edge in G.edges():
+            i = i + 1
+            print(i, edge)
             alias_edges[edge] = self.get_alias_edge(edge[0], edge[1])
 
         self.alias_nodes = alias_nodes
