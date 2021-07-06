@@ -159,6 +159,8 @@ class GCN(object):
         self.build_train_val_test()
         adj = nx.adjacency_matrix(g)  # the type of graph
         self.support = [preprocess_adj(adj)]
+        # support是邻接矩阵
+        # https://blog.csdn.net/yingluo54/article/details/113325108
 
     def construct_feed_dict(self, labels_mask):
         """Construct feed dictionary."""

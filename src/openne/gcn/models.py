@@ -1,14 +1,20 @@
-# 原
-# from .layers import *
-# from .metrics import *
 
-from layers import *
-from metrics import *
+'''
+定义了一个model基类，以及两个继承自model类的MLP、GCN类。
+    定义了一个model基类，以及两个继承自model类的MLP、GCN类。
+'''
+# 原
+from .layers import *
+from .metrics import *
+# from gcn.layers import *
+# from gcn.metrics import *
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
 
+# 根据Layer来建立Model,主要是设置了self.layers 和 self.activations 建立序列模型，
+# 还有init中的其他比如loss、accuracy、optimizer、opt_op等。
 class Model(object):
     def __init__(self, **kwargs):
         allowed_kwargs = {'name', 'logging'}
@@ -25,7 +31,10 @@ class Model(object):
         self.vars = {}
         self.placeholders = {}
 
+        # 在子类中可以看出，通过_build方法append各个层
+        # 保存每一个layer
         self.layers = []
+        # 保存每一次的输入，以及最后一层的输出
         self.activations = []
 
         self.inputs = None
@@ -36,6 +45,7 @@ class Model(object):
         self.optimizer = None
         self.opt_op = None
 
+    # 定义私有方法，只能被类中的函数调用，不能在类外单独调用
     def _build(self):
         raise NotImplementedError
 
@@ -46,14 +56,21 @@ class Model(object):
 
         # Build sequential layer model
         self.activations.append(self.inputs)
+
+        # 以一个两层GCN层为例，输入inputs是features
+        # self.activations.append(self.inputs)初始化第一个元素为inputs，也就是features
+        # 第一层，hidden=layer(self.activations[-1])，即hidden等于inputs的输出outputs，并将第一层的输出hidden=outputs加入到activations中
+        # 同理，对第二层，hidden作为一个中间存储结果。最后activations分别存储了三个元素：第一层的输入，第二层的输入（第一层的输出），第二层的输出
+        # 最后self.outputs=最后一层的输出
         for layer in self.layers:
+            # Layer类重写了__call__ 函数，可以把对象当函数调用,__call__输入为inputs，输出为outputs
             hidden = layer(self.activations[-1])
             self.activations.append(hidden)
+
         self.outputs = self.activations[-1]
 
         # Store model variables for easy access
-        variables = tf.get_collection(
-            tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
+        variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
         self.vars = {var.name: var for var in variables}
 
         # Build metrics
@@ -87,6 +104,7 @@ class Model(object):
         print("Model restored from file: %s" % save_path)
 
 
+# 继承Model的多层感知机，主要是重写了基类中没有实现的函数；计算了网络第一层的权重衰减L2损失，因为这是半监督学习，还计算了掩码交叉熵masked_softmax_cross_entropy
 class MLP(Model):
     def __init__(self, placeholders, input_dim, **kwargs):
         super(MLP, self).__init__(**kwargs)
@@ -95,19 +113,18 @@ class MLP(Model):
         self.input_dim = input_dim
         # self.input_dim = self.inputs.get_shape().as_list()[1]  # To be supported in future Tensorflow versions
         self.output_dim = placeholders['labels'].get_shape().as_list()[1]
-        self.placeholders = placeholders
+        self.placeholders = placeholders  # 以key，value形式存储的字典
 
-        self.optimizer = tf.train.AdamOptimizer(
-            learning_rate=FLAGS.learning_rate)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
 
         self.build()
 
     def _loss(self):
-        # Weight decay loss
+        # Weight decay loss # 正则化项
         for var in self.layers[0].vars.values():
             self.loss += FLAGS.weight_decay * tf.nn.l2_loss(var)
 
-        # Cross entropy error
+        # Cross entropy error # 交叉熵损失函数
         self.loss += masked_softmax_cross_entropy(self.outputs, self.placeholders['labels'],
                                                   self.placeholders['labels_mask'])
 
@@ -135,6 +152,7 @@ class MLP(Model):
         return tf.nn.softmax(self.outputs)
 
 
+# 继承Model的卷机模型 GCN
 class GCN(Model):
     def __init__(self, placeholders, input_dim, hidden1, weight_decay, **kwargs):
         super(GCN, self).__init__(**kwargs)
@@ -147,39 +165,62 @@ class GCN(Model):
         self.output_dim = placeholders['labels'].get_shape().as_list()[1]
         self.placeholders = placeholders
 
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
+        # self.optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
 
         self.build()
 
+    # 损失计算
     def _loss(self):
         # Weight decay loss
         for var in self.layers[0].vars.values():
-            self.loss += self.weight_decay * tf.nn.l2_loss(var)
+            # self.loss += self.weight_decay * tf.nn.l2_loss(var)
+            self.loss += FLAGS.weight_decay * tf.nn.l2_loss(var)
 
         # Cross entropy error
         self.loss += masked_softmax_cross_entropy(self.outputs, self.placeholders['labels'],
                                                   self.placeholders['labels_mask'])
 
+    # 计算模型准确度
     def _accuracy(self):
         self.accuracy = masked_accuracy(self.outputs, self.placeholders['labels'],
                                         self.placeholders['labels_mask'])
 
+    # 构建模型：两层GCN
     def _build(self):
+        # 第一层的输入维度：input_dim=1433
+        # 第一层的输出维度：output_dim=FLAGS.hidden1=16
+        # 第一层的激活函数：relu
 
         self.layers.append(GraphConvolution(input_dim=self.input_dim,
-                                            output_dim=self.hidden1,
+                                            output_dim=FLAGS.hidden1,
                                             placeholders=self.placeholders,
                                             act=tf.nn.relu,
                                             dropout=True,
                                             sparse_inputs=True,
                                             logging=self.logging))
 
-        self.layers.append(GraphConvolution(input_dim=self.hidden1,
+        # 第二层的输入等于第一层的输出维度：input_dim=FLAGS.hidden1=16
+        # 第二层的输出维度：output_dim=placeholders['labels'].get_shape().as_list()[1]=7
+        # 第二层的激活函数：lambda x: x，即没有加激活函数
+
+        self.layers.append(GraphConvolution(input_dim=FLAGS.hidden1,
                                             output_dim=self.output_dim,
                                             placeholders=self.placeholders,
                                             act=lambda x: x,
                                             dropout=True,
                                             logging=self.logging))
 
+    # 模型预测
     def predict(self):
+        # 返回的tensor每一行和为1
         return tf.nn.softmax(self.outputs)
+    # test.py
+    # tf.enable_eager_execution()
+    # ones = tf.ones(shape=[2,3])
+    # print(ones)
+    # temp3 = tf.nn.softmax(ones)
+    # print(temp3)
+    # tf.Tensor(
+    # [[0.33333334 0.33333334 0.33333334]
+    #  [0.33333334 0.33333334 0.33333334]], shape=(2, 3), dtype=float32)
