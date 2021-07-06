@@ -29,9 +29,6 @@ def xie_embedding(outs, labels, epoch) :
 
 #
 
-#
-
-
 # Set random seed
 seed = 123
 np.random.seed(seed)

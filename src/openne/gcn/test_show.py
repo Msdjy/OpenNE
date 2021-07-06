@@ -6,8 +6,23 @@ import numpy as np
 import os
 
 from PIL import Image
-from images2gif import writeGif
+# from images2gif import writeGif
 import imageio
+
+# 可视化
+def xie_embedding(outs, labels, epoch) :
+    label_dict = {0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6"}  # 定义标签颜色字典
+    # 写文件
+    with open("./embeddings.txt", "w") as fe, open("./labels.txt", 'w') as fl:
+        for i in range(len(outs[3])):
+            fl.write(label_dict[int(list(labels[i]).index(1.))] + "\n")
+            fe.write(" ".join(map(str, outs[3][i])) + "\n")
+
+    with open(os.path.join('tmp', str(epoch) + "embeddings.txt"), "w") as fe:
+        for i in range(len(outs[3])):
+            fe.write(" ".join(map(str, outs[3][i])) + "\n")
+
+#
 
 # def img2gif(epoch):
 #     outfilename = "my.gif"  # 转化的GIF图片名称
@@ -62,11 +77,11 @@ def vec2img(epoch):
                 a.append(float(i))
             x.append(a)
 
-    # pca=PCA(n_components=2)     #加载PCA算法，设置降维后主成分数目为2
-    # embedded=pca.fit_transform(x)#对样本进行降维
+    pca=PCA(n_components=2)     #加载PCA算法，设置降维后主成分数目为2
+    embedded=pca.fit_transform(x)#对样本进行降维
 
-    tsne = TSNE(n_components=2)
-    embedded = tsne.fit_transform(x)
+    # tsne = TSNE(n_components=2)
+    # embedded = tsne.fit_transform(x)
 
     # print(embedded)
 
@@ -74,7 +89,7 @@ def vec2img(epoch):
     color = ['#F0F8FF', 'green', 'b', 'r', '#7FFFD4', '#FFC0CB', '#00022e']
 
     # 创建显示的figure
-    # fig = plt.figure()
+    fig = plt.figure()
     ax = plt
     # ax = Axes3D(fig)
     # ax.xlim(-5,5)  # 设置x轴范围
