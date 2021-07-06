@@ -8,26 +8,9 @@ import tensorflow as tf
 # from gcn.models import GCN, MLP
 from utils import *
 from models import GCN, MLP
+
 from test_show import *
 
-
-#
-# import test.stest
-
-# 可视化
-def xie_embedding(outs, labels, epoch) :
-    label_dict = {0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6"}  # 定义标签颜色字典
-    # 写文件
-    with open("./embeddings.txt", "w") as fe, open("./labels.txt", 'w') as fl:
-        for i in range(len(outs[3])):
-            fl.write(label_dict[int(list(labels[i]).index(1.))] + "\n")
-            fe.write(" ".join(map(str, outs[3][i])) + "\n")
-
-    with open(os.path.join('tmp', str(epoch) + "embeddings.txt"), "w") as fe:
-        for i in range(len(outs[3])):
-            fe.write(" ".join(map(str, outs[3][i])) + "\n")
-
-#
 
 # Set random seed
 seed = 123
@@ -52,6 +35,7 @@ flags.DEFINE_integer('early_stopping', 10,
 flags.DEFINE_integer('max_degree', 3, 'Maximum Chebyshev polynomial degree.')
 
 # Load data
+
 # 原
 # adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask = load_data(FLAGS.dataset)
 adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask, labels = load_data(FLAGS.dataset)
@@ -85,6 +69,7 @@ placeholders = {
 }
 
 # Create model
+
 # 原
 # model = model_func(placeholders, input_dim=features[2][1], logging=True)
 model = model_func(placeholders, input_dim=features[2][1], logging=True, weight_decay=5e-4, hidden1=16)
@@ -109,7 +94,6 @@ cost_val = []
 
 
 # FLAGS.epochs = 10
-
 # Train model
 for epoch in range(FLAGS.epochs):
 
@@ -120,9 +104,9 @@ for epoch in range(FLAGS.epochs):
     feed_dict.update({placeholders['dropout']: FLAGS.dropout})
 
     # Training step
+
     # 原
-    # outs = sess.run([model.opt_op, model.loss, model.accuracy],
-    #                 feed_dict=feed_dict)
+    # outs = sess.run([model.opt_op, model.loss, model.accuracy],feed_dict=feed_dict)
     outs = sess.run([model.opt_op, model.loss, model.accuracy, model.outputs], feed_dict=feed_dict)
     # Validation
     cost, acc, duration = evaluate(
@@ -136,18 +120,19 @@ for epoch in range(FLAGS.epochs):
         "val_acc=", "{:.5f}".format(acc), "time=", "{:.5f}".format(time.time() - t))
 
     #
-    xie_embedding(outs, labels, epoch)
+    write_vec(outs, labels, epoch)
     vec2img(epoch)
     #
+
     if epoch > FLAGS.early_stopping and cost_val[-1] > np.mean(cost_val[-(FLAGS.early_stopping+1):-1]):
         print("Early stopping...")
         break
 
 
 img2gif(FLAGS.epochs)
+
+
 print("Optimization Finished!")
-
-
 
 # Testing
 test_cost, test_acc, test_duration = evaluate(
