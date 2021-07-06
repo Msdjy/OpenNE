@@ -1,6 +1,7 @@
-# 原
-from .inits import *
-# from inits import *
+# 原 gcnAPI
+# from .inits import *
+from inits import *
+# train.py
 import tensorflow as tf
 
 flags = tf.app.flags

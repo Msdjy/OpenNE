@@ -3,15 +3,15 @@
 定义了一个model基类，以及两个继承自model类的MLP、GCN类。
     定义了一个model基类，以及两个继承自model类的MLP、GCN类。
 '''
-# 原
-from .layers import *
-from .metrics import *
-# from gcn.layers import *
-# from gcn.metrics import *
+# 原 gcnAPI
+# from .layers import *
+# from .metrics import *
+from layers import *
+from metrics import *
+# train.py
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-
 
 # 根据Layer来建立Model,主要是设置了self.layers 和 self.activations 建立序列模型，
 # 还有init中的其他比如loss、accuracy、optimizer、opt_op等。
@@ -115,14 +115,14 @@ class MLP(Model):
         self.output_dim = placeholders['labels'].get_shape().as_list()[1]
         self.placeholders = placeholders  # 以key，value形式存储的字典
 
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
 
         self.build()
 
     def _loss(self):
         # Weight decay loss # 正则化项
         for var in self.layers[0].vars.values():
-            self.loss += FLAGS.weight_decay * tf.nn.l2_loss(var)
+            self.loss += self.weight_decay * tf.nn.l2_loss(var)
 
         # Cross entropy error # 交叉熵损失函数
         self.loss += masked_softmax_cross_entropy(self.outputs, self.placeholders['labels'],
@@ -134,14 +134,14 @@ class MLP(Model):
 
     def _build(self):
         self.layers.append(Dense(input_dim=self.input_dim,
-                                 output_dim=FLAGS.hidden1,
+                                 output_dim=self.hidden1,
                                  placeholders=self.placeholders,
                                  act=tf.nn.relu,
                                  dropout=True,
                                  sparse_inputs=True,
                                  logging=self.logging))
 
-        self.layers.append(Dense(input_dim=FLAGS.hidden1,
+        self.layers.append(Dense(input_dim=self.hidden1,
                                  output_dim=self.output_dim,
                                  placeholders=self.placeholders,
                                  act=lambda x: x,
@@ -165,8 +165,7 @@ class GCN(Model):
         self.output_dim = placeholders['labels'].get_shape().as_list()[1]
         self.placeholders = placeholders
 
-        # self.optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.learning_rate)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
 
         self.build()
 
@@ -174,8 +173,7 @@ class GCN(Model):
     def _loss(self):
         # Weight decay loss
         for var in self.layers[0].vars.values():
-            # self.loss += self.weight_decay * tf.nn.l2_loss(var)
-            self.loss += FLAGS.weight_decay * tf.nn.l2_loss(var)
+            self.loss += self.weight_decay * tf.nn.l2_loss(var)
 
         # Cross entropy error
         self.loss += masked_softmax_cross_entropy(self.outputs, self.placeholders['labels'],
@@ -193,7 +191,7 @@ class GCN(Model):
         # 第一层的激活函数：relu
 
         self.layers.append(GraphConvolution(input_dim=self.input_dim,
-                                            output_dim=FLAGS.hidden1,
+                                            output_dim=self.hidden1,
                                             placeholders=self.placeholders,
                                             act=tf.nn.relu,
                                             dropout=True,
@@ -204,7 +202,7 @@ class GCN(Model):
         # 第二层的输出维度：output_dim=placeholders['labels'].get_shape().as_list()[1]=7
         # 第二层的激活函数：lambda x: x，即没有加激活函数
 
-        self.layers.append(GraphConvolution(input_dim=FLAGS.hidden1,
+        self.layers.append(GraphConvolution(input_dim=self.hidden1,
                                             output_dim=self.output_dim,
                                             placeholders=self.placeholders,
                                             act=lambda x: x,
