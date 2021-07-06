@@ -37,6 +37,29 @@ def sample_mask(idx, l):
 # 数据的读取，这个预处理是把训练集（其中一部分带有标签），测试集，标签的位置，对应的掩码训练标签等返回。
 def load_data(dataset_str):
     """
+    LIL（Row-Based Linked List Format）-基于行的链表格式
+载入数据的维度（以Cora数据集为例）
+metrics.py
+inits.py
+从gcn/data文件夹下读取数据，文件包括有：
+ind.dataset_str.x => 训练实例的特征向量，如scipy.sparse.csr.csr_matrix类的实例
+ind.dataset_str.tx => 测试实例的特征向量，如scipy.sparse.csr.csr_matrix类的实例
+ind.dataset_str.allx => 有标签的+无无标签训练实例的特征向量，是ind.dataset_str.x的超集
+ind.dataset_str.y => 训练实例的标签，独热编码，numpy.ndarray类的实例
+ind.dataset_str.ty => 测试实例的标签，独热编码，numpy.ndarray类的实例
+ind.dataset_str.ally => 有标签的+无无标签训练实例的标签，独热编码，numpy.ndarray类的实例
+ind.dataset_str.graph => 图数据，collections.defaultdict类的实例，格式为 {index：[index_of_neighbor_nodes]}
+ind.dataset_str.test.index => 测试实例的id
+
+载入数据的维度（以Cora数据集为例）
+adj(邻接矩阵)：由于比较稀疏，邻接矩阵格式是LIL的，并且shape为(2708, 2708)
+features（特征矩阵）：每个节点的特征向量也是稀疏的，也用LIL格式存储，features.shape: (2708, 1433)
+labels：ally, ty数据集叠加构成，labels.shape:(2708, 7)
+train_mask, val_mask, test_mask：shaped都为(2708, )的向量，但是train_mask中的[0,140)范围的是True，其余是False；val_mask中范围为(140, 640]范围为True，其余的是False；test_mask中范围为[1708,2707]范围是True，其余的是False
+y_train, y_val, y_test：shape都是(2708, 7) 。y_train的值为对应与labels中train_mask为True的行，其余全是0；y_val的值为对应与labels中val_mask为True的行，其余全是0；y_test的值为对应与labels中test_mask为True的行，其余全是0
+特征矩阵进行归一化并返回一个格式为(coords, values, shape)的元组
+将邻接矩阵加上自环以后，对称归一化，并存储为COO模式，最后返回格式为(coords, values, shape)的元组
+总共2708个节点，但是训练数据仅用了140个，范围是(0, 140)，验证集用了500个，范围是(140, 640]，测试集用了1000个，范围是[1708,2707]，其余范围从[641，1707]的数据集呢
     Loads input data from gcn/data directory
     ind.dataset_str.x => the feature vectors of the training instances as scipy.sparse.csr.csr_matrix object;
     ind.dataset_str.tx => the feature vectors of the test instances as scipy.sparse.csr.csr_matrix object;

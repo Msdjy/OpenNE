@@ -1,6 +1,6 @@
 # 原 gcnAPI
-# from .inits import *
-from inits import *
+from .inits import *
+# from inits import *
 # train.py
 import tensorflow as tf
 

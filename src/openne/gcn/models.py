@@ -4,10 +4,10 @@
     定义了一个model基类，以及两个继承自model类的MLP、GCN类。
 '''
 # 原 gcnAPI
-# from .layers import *
-# from .metrics import *
-from layers import *
-from metrics import *
+from .layers import *
+from .metrics import *
+# from layers import *
+# from metrics import *
 # train.py
 
 flags = tf.app.flags
