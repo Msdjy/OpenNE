@@ -5,6 +5,7 @@ import time
 import scipy.sparse as sp
 import tensorflow as tf
 
+from .test_show import *
 
 class GCN(object):
 
@@ -52,7 +53,7 @@ class GCN(object):
 
             # Training step
             outs = self.sess.run(
-                [self.model.opt_op, self.model.loss, self.model.accuracy], feed_dict=feed_dict)
+                [self.model.opt_op, self.model.loss, self.model.accuracy, self.model.outputs], feed_dict=feed_dict)
 
             # Validation
             cost, acc, duration = self.evaluate(self.val_mask)
@@ -64,11 +65,16 @@ class GCN(object):
                 outs[2]), "val_loss=", "{:.5f}".format(cost),
                 "val_acc=", "{:.5f}".format(acc), "time=", "{:.5f}".format(time.time() - t))
 
+            write_vec(outs, self.labels, epoch)
+            vec2img(epoch, self.graph)
+
             if epoch > self.early_stopping and cost_val[-1] > np.mean(cost_val[-(self.early_stopping+1):-1]):
                 print("Early stopping...")
                 break
+
         print("Optimization Finished!")
 
+        img2gif(self.epochs)
 
         # Testing
         test_cost, test_acc, test_duration = self.evaluate(self.test_mask)

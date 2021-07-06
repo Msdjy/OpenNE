@@ -10,6 +10,7 @@ import imageio
 # from images2gif import writeGif
 
 
+
 # 可视化
 def write_vec(outs, labels, epoch) :
     label_dict = {0: "0", 1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6"}  # 定义标签颜色字典
@@ -18,8 +19,8 @@ def write_vec(outs, labels, epoch) :
         for i in range(len(outs[3])):
             fl.write(label_dict[int(list(labels[i]).index(1.))] + "\n")
             fe.write(" ".join(map(str, outs[3][i])) + "\n")
-
-    with open(os.path.join('tmp', str(epoch) + "embeddings.txt"), "w") as fe:
+    # print(os.getcwd())
+    with open(os.path.join('openne','gcn','tmp', str(epoch) + "embeddings.txt"), "w") as fe:
         for i in range(len(outs[3])):
             fe.write(" ".join(map(str, outs[3][i])) + "\n")
 
@@ -43,7 +44,8 @@ def img2gif(epoch):
     img_paths = []
     for i in range(epoch):  # 读取100张图片
         # (os.path.join('tmp', t + ".jpg"))
-        img_path = (os.path.join('tmp', str(i) + ".jpg"))  # path是图片所在文件，最后filename的名字必须是存在的图片
+        # img_path = (os.path.join('tmp', str(i) + ".jpg"))  # path是图片所在文件，最后filename的名字必须是存在的图片
+        img_path = (os.path.join('openne', 'gcn', 'tmp', str(i) + ".jpg"))  # path是图片所在文件，最后filename的名字必须是存在的图片
         img_paths.append(img_path)  # 将使用的读取图片汇总
 
     gif_images = []
@@ -53,14 +55,14 @@ def img2gif(epoch):
 
 
 
-def vec2img(epoch):
+def vec2img(epoch, G):
     x, y = [], []
     with open("labels.txt", "r") as f:  # 打开文件
         data1 = f.read().split("\n")  # 读取文件
         t = 1
         for i in data1:
             t = t + 1
-            if t == 2709:
+            if t == 500:
                 break
             y.append(int(i))
     with open("embeddings.txt", "r") as f:  # 打开文件
@@ -68,7 +70,7 @@ def vec2img(epoch):
         t = 1
         for item in data1:
             t = t + 1
-            if t == 2709:
+            if t == 500:
                 break
             a = []
             item1 = item.split(" ")
@@ -94,7 +96,8 @@ def vec2img(epoch):
 
     # ax.xlim(-5,5)  # 设置x轴范围
     # ax.ylim(-5,5)  # 设置y轴范围
-    ax.scatter(embedded[:, 0], embedded[:, 1], c=[color[t] for t in y], alpha=0.5, s=np.random.randint(5, 10))
+    ax.scatter(embedded[:, 0], embedded[:, 1], c=[color[t] for t in y], alpha=1, s=np.random.randint(5, 10))
+
 
     # 生成三维数据
     # xx = np.random.random(20)*10-5   #取100个随机数，范围在5~5之间
@@ -107,4 +110,5 @@ def vec2img(epoch):
     # plt.axis('off')
 
     # plt.show()
-    plt.savefig(os.path.join('tmp', str(epoch) + ".jpg"))
+    # plt.savefig(os.path.join('tmp', str(epoch) + ".jpg"))
+    plt.savefig(os.path.join('openne', 'gcn', 'tmp', str(epoch) + ".jpg"))
