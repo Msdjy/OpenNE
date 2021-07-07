@@ -20,6 +20,8 @@ import ast
 
 import networkx as nx
 
+import matplotlib.pyplot as plt
+
 
 def parse_args():
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter,
@@ -124,16 +126,17 @@ def main(args):
         # pos = nx.kamada_kawai_layout(g.G)
         # nx.draw(g.G, pos, with_labels=True, node_color=[[.7, .7, .7]])
 
-        G = nx.DiGraph()  # 无多重边有向图
-        G.add_node(2)  # 添加一个节点
-        G.add_nodes_from([3, 4, 5, 6, 8, 9, 10, 11, 12])  # 添加多个节点
-        G.add_cycle([1, 2, 3, 4])  # 添加环
-        G.add_edge(1, 3)  # 添加一条边
-        G.add_edges_from([(3, 5), (3, 6), (6, 7)])  # 添加多条边
-        pos = nx.kamada_kawai_layout(G)
-        nx.draw(G, pos, with_labels=True, node_color=[[.7, .7, .7]])
+        # G = nx.DiGraph()  # 无多重边有向图
+        # G.add_node(2)  # 添加一个节点
+        # G.add_nodes_from([3, 4, 5, 6, 8, 9, 10, 11, 12])  # 添加多个节点
+        # G.add_cycle([1, 2, 3, 4])  # 添加环
+        # G.add_edge(1, 3)  # 添加一条边
+        # G.add_edges_from([(3, 5), (3, 6), (6, 7)])  # 添加多条边
+        pos = nx.kamada_kawai_layout(g.G)
+        nx.draw(g.G, pos, with_labels=True, node_color=[[.7, .7, .7]])
         # nx.draw(G, pos, with_labels=True, node_color=[[.7, .7, .7]])
 
+        plt.show()
         print(1)
 
     if args.method == 'node2vec':
